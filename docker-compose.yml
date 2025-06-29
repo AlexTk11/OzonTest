@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # Postgres DB
+  postgres:
+    image: postgres:15-alpine
+    
+    container_name: comments_postgres
+    
+    environment:
+      POSTGRES_DB: comments_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    
+    ports:
+      - "5432:5432"
+    
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    
+    healthcheck: 
+      test: ["CMD-SHELL", "pg_isready -U postgres -d comments_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Server with Postgres
+  app-postgres:
+    build: .
+    container_name: comments_app_postgres
+    environment:
+      - STORAGE_TYPE=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=comments_db
+      - DB_SSLMODE=disable
+      - PORT=8080
+    
+    ports:
+      - "8080:8080"
+    
+    depends_on:
+      postgres:
+        condition: service_healthy
+    
+    profiles:
+      - postgres
+
+  # Server with in-memory Storage
+  app-memory:
+    build: .
+    
+    container_name: comments_app_memory
+    
+    environment:
+      - STORAGE_TYPE=memory
+      - PORT=8080
+   
+    ports:
+      - "8080:8080"
+    
+    profiles:
+      - memory
+
+volumes:
+  postgres_data:

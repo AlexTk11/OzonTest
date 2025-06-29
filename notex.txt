@@ -1,0 +1,97 @@
+docker build -t post-and-comment .
+docker run -p 8080:8080 post-and-comment
+
+
+query GetPostWithComments($postID: ID!) {
+  getPost(postID: $postID) {
+    id
+    text
+    commentsEnabled
+    comments(parentID: null, limit: 10, offset: 0) {
+      id
+      text
+      createdAt
+      parentID
+      children {
+        id
+        text
+        createdAt
+        parentID
+      }
+    }
+  }
+}
+
+{
+  "postID": ""
+}
+
+
+Создание поста
+
+mutation {
+  newPost(text: "Первый пост", commentsEnabled: true) {
+    id
+    text
+    commentsEnabled
+  }
+}
+
+
+mutation {
+  addComment(postID: "aac1f51b-0cad-4ee4-a093-1efe7efb204f", text: "Первый комментарий") {
+    id
+    text
+    createdAt
+  }
+}
+
+mutation {
+  addComment(
+    postID: "aac1f51b-0cad-4ee4-a093-1efe7efb204f",
+    parentID: "a-parent-comment-id",
+    text: "Ответ на комментарий"
+  ) {
+    id
+    text
+    parentID
+  }
+}
+
+
+mutation {
+  setCommentsEnabled(postID: "aac1f51b-0cad-4ee4-a093-1efe7efb204f", enabled: false) {
+    id
+    commentsEnabled
+  }
+}
+
+
+
+subscription {
+  commentAdded(postID: "aac1f51b-0cad-4ee4-a093-1efe7efb204f") {
+    id
+    text
+    createdAt
+    parentID
+  }
+}
+
+
+mutation {
+  c1: newPost(text: "1 пост", commentsEnabled: true) {
+    id
+    text
+    commentsEnabled
+  }
+   c2: newPost(text: "2 пост", commentsEnabled: false) {
+    id
+    text
+    commentsEnabled
+  }
+   c3: newPost(text: "3 пост", commentsEnabled: true) {
+    id
+    text
+    commentsEnabled
+  }
+}
